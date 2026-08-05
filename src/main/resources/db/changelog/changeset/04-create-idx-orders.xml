@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="create_idx_orders_user_active" author="Ivan_Mukha">
+        <createIndex indexName="idx_orders_user_active" tableName="orders">
+            <column name="user_id"/>
+        </createIndex>
+        <modifySql dbms="postgresql">
+            <append value=" WHERE deleted = false"/>
+        </modifySql>
+    </changeSet>
+
+    <changeSet id="create_idx_orders_status_active" author="Ivan_Mukha">
+        <createIndex indexName="idx_orders_status_active" tableName="orders">
+            <column name="status"/>
+        </createIndex>
+        <modifySql dbms="postgresql">
+            <append value=" WHERE deleted = false"/>
+        </modifySql>
+    </changeSet>
+
+</databaseChangeLog>
