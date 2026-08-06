@@ -1,4 +1,4 @@
-package com.mukha.order_service.model.status;
+package com.mukha.orderservice.model.status;
 
 public enum OrderStatus {
     CREATED,

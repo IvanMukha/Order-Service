@@ -1,4 +1,4 @@
-package com.mukha.order_service.model;
+package com.mukha.orderservice.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,7 +12,6 @@ import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.FieldNameConstants;
 
 @Entity
 @Table(name = "order_items")

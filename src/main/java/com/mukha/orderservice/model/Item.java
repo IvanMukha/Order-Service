@@ -1,4 +1,4 @@
-package com.mukha.order_service.model;
+package com.mukha.orderservice.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

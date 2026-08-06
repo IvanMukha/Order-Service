@@ -1,4 +1,4 @@
-package com.mukha.order_service;
+package com.mukha.orderservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

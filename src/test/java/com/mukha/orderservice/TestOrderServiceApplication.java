@@ -1,4 +1,4 @@
-package com.mukha.order_service;
+package com.mukha.orderservice;
 
 import org.springframework.boot.SpringApplication;
 
