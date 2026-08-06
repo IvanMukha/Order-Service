@@ -19,6 +19,9 @@ import com.mukha.orderservice.service.OrderService;
 import com.mukha.orderservice.specification.OrderSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -48,24 +51,25 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderMapper.toEntity(createOrderRequest);
         order.setUserId(userResponse.id());
 
-        enrichAndSetOrderItems(order,createOrderRequest.orderItems());
+        enrichAndSetOrderItems(order, createOrderRequest.orderItems());
         BigDecimal totalPrice = calculateTotalPrice(order.getOrderItems());
         order.setTotalPrice(totalPrice);
 
         Order savedOrder = orderRepository.save(order);
-        return orderMapper.toResponse(savedOrder,userResponse);
+        return orderMapper.toResponse(savedOrder, userResponse);
     }
 
+    @Cacheable(value = "orders", key = "#id")
     public OrderResponse getById(Long id) {
         log.debug("Fetching order by id: {}", id);
         Order foundOrder = getOrderEntityById(id);
-        UserResponse userResponse =userServiceClient.getUserById(foundOrder.getUserId());
-        return orderMapper.toResponse(foundOrder,userResponse);
+        UserResponse userResponse = userServiceClient.getUserById(foundOrder.getUserId());
+        return orderMapper.toResponse(foundOrder, userResponse);
     }
 
 
-    public Page<OrderResponse> getAll(Long userId,LocalDateTime startDate, LocalDateTime endDate, List<OrderStatus> orderStatuses, Pageable pageable) {
-        log.debug("Fetching pageable orders. Filters - userId: {}, startDate: {}, endDate: {}, statuses: {}",userId, startDate, endDate, orderStatuses);
+    public Page<OrderResponse> getAll(Long userId, LocalDateTime startDate, LocalDateTime endDate, List<OrderStatus> orderStatuses, Pageable pageable) {
+        log.debug("Fetching pageable orders. Filters - userId: {}, startDate: {}, endDate: {}, statuses: {}", userId, startDate, endDate, orderStatuses);
 
         Specification<Order> spec = Specification.where(OrderSpecification.hasUserId(userId))
                 .and(OrderSpecification.createdWithinRange(startDate, endDate))
@@ -75,21 +79,23 @@ public class OrderServiceImpl implements OrderService {
         return foundOrders.map(orderMapper::toResponse);
     }
 
+    @CachePut(value = "orders", key = "#id")
     @Transactional
     public OrderResponse updateById(Long id, UpdateOrderRequest updateOrderRequest) {
         log.debug("Updating order with id: {}", id);
         Order foundOrder = getOrderEntityById(id);
         orderMapper.updateEntityFromDto(updateOrderRequest, foundOrder);
-        enrichAndSetOrderItems(foundOrder,updateOrderRequest.orderItems());
+        enrichAndSetOrderItems(foundOrder, updateOrderRequest.orderItems());
         BigDecimal totalPrice = calculateTotalPrice(foundOrder.getOrderItems());
         foundOrder.setTotalPrice(totalPrice);
 
-        UserResponse userResponse =userServiceClient.getUserById(foundOrder.getUserId());
+        UserResponse userResponse = userServiceClient.getUserById(foundOrder.getUserId());
         Order updatedOrder = orderRepository.save(foundOrder);
-        return orderMapper.toResponse(updatedOrder,userResponse);
+        return orderMapper.toResponse(updatedOrder, userResponse);
     }
 
     @Transactional
+    @CacheEvict(value = "orders", key = "#id")
     public void deleteOrderById(Long id) {
         log.debug("Deleting order with id: {}", id);
         Order foundOrder = getOrderEntityById(id);
