@@ -11,7 +11,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -22,6 +21,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,7 +50,7 @@ class OrderSecurityTest {
 
     @BeforeEach
     void setUp() {
-        mockedSecurityContextHolder = Mockito.mockStatic(SecurityContextHolder.class);
+        mockedSecurityContextHolder = mockStatic(SecurityContextHolder.class);
         mockedSecurityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
     }
 
@@ -69,7 +70,7 @@ class OrderSecurityTest {
         when(jwt.getClaim("sub")).thenReturn(userUuid);
         when(orderService.getUserIdByOrderId(orderId)).thenReturn(orderUserId);
 
-        UserResponse mockUser = Mockito.mock(UserResponse.class);
+        UserResponse mockUser = mock(UserResponse.class);
         when(mockUser.keycloakUUID()).thenReturn(UUID.fromString(userUuid));
         when(userServiceClient.getUserById(orderUserId)).thenReturn(mockUser);
 
@@ -90,7 +91,7 @@ class OrderSecurityTest {
         when(jwt.getClaim("sub")).thenReturn(currentUserUuid);
         when(orderService.getUserIdByOrderId(orderId)).thenReturn(orderUserId);
 
-        UserResponse mockUser = Mockito.mock(UserResponse.class);
+        UserResponse mockUser = mock(UserResponse.class);
         when(mockUser.keycloakUUID()).thenReturn(UUID.fromString(differentUserUuid));
         when(userServiceClient.getUserById(orderUserId)).thenReturn(mockUser);
 
