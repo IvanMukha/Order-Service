@@ -8,6 +8,7 @@ import com.mukha.orderservice.dto.response.OrderResponse;
 import com.mukha.orderservice.dto.response.UserResponse;
 import com.mukha.orderservice.exception.ItemNotFoundException;
 import com.mukha.orderservice.exception.OrderNotFoundException;
+import com.mukha.orderservice.exception.UserNotFoundException;
 import com.mukha.orderservice.mapper.OrderMapper;
 import com.mukha.orderservice.model.Item;
 import com.mukha.orderservice.model.Order;
@@ -275,5 +276,23 @@ class OrderServiceImplTest {
                 .isInstanceOf(OrderNotFoundException.class);
 
         verify(orderRepository, never()).delete(any(Order.class));
+    }
+    @Test
+    void getUserIdByOrderId_shouldReturnUserId_whenOrderExists() {
+        when(orderRepository.findUserIdByOrderId(ORDER_ID)).thenReturn(Optional.of(USER_ID));
+
+        Long result = orderService.getUserIdByOrderId(ORDER_ID);
+
+        assertThat(result).isEqualTo(USER_ID);
+        verify(orderRepository).findUserIdByOrderId(ORDER_ID);
+    }
+    @Test
+    void getUserIdByOrderId_shouldThrowUserNotFoundException_whenOrderDoesNotExist() {
+        when(orderRepository.findUserIdByOrderId(ORDER_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderService.getUserIdByOrderId(ORDER_ID))
+                .isInstanceOf(UserNotFoundException.class);
+
+        verify(orderRepository).findUserIdByOrderId(ORDER_ID);
     }
 }
