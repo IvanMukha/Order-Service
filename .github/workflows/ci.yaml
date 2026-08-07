@@ -4,7 +4,7 @@ on:
   push:
     branches: ["main"]
   pull_request:
-    branches: ["main", "order_service"]
+    branches: ["main", "order-service"]
 
 env:
   IMAGE_NAME: orderservice
@@ -14,6 +14,7 @@ env:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
 
@@ -44,13 +45,14 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
-        run: >
-          mvn -B clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
-          -Dsonar.projectKey=IvanMukha_OrderService
-          -Dsonar.organization=ivanmukha
-          -Dsonar.host.url=$SONAR_HOST_URL
-          -Dsonar.token=$SONAR_TOKEN
-          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mvn -B clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+            -Dsonar.projectKey=IvanMukha_OrderService \
+            -Dsonar.organization=ivanmukha \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.token=$SONAR_TOKEN \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
       - name: SonarQube Quality Gate Check
         uses: sonarsource/sonarqube-quality-gate-action@cf038b0e0cdecfa9e56c198bbb7d21d751d62c3b
