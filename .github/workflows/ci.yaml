@@ -34,8 +34,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: >
           mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
-          -Dsonar.projectKey=GritsH_innowise-order-service
-          -Dsonar.organization=gritsh
+          -Dsonar.projectKey=IvanMukha_OrderService
+          -Dsonar.organization=ivanmukha
           -Dsonar.host.url=https://sonarcloud.io
           -Dsonar.token=$SONAR_TOKEN
 
