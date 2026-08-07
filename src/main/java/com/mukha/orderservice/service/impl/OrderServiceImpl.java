@@ -8,6 +8,7 @@ import com.mukha.orderservice.dto.response.OrderResponse;
 import com.mukha.orderservice.dto.response.UserResponse;
 import com.mukha.orderservice.exception.ItemNotFoundException;
 import com.mukha.orderservice.exception.OrderNotFoundException;
+import com.mukha.orderservice.exception.UserNotFoundException;
 import com.mukha.orderservice.mapper.OrderMapper;
 import com.mukha.orderservice.model.Item;
 import com.mukha.orderservice.model.Order;
@@ -32,6 +33,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import static java.util.stream.Collectors.toMap;
 
 @Slf4j
 @Service
@@ -50,6 +54,7 @@ public class OrderServiceImpl implements OrderService {
         UserResponse userResponse = userServiceClient.getUserByEmail(userEmail);
         Order order = orderMapper.toEntity(createOrderRequest);
         order.setUserId(userResponse.id());
+        order.setStatus(OrderStatus.CREATED);
 
         enrichAndSetOrderItems(order, createOrderRequest.orderItems());
         BigDecimal totalPrice = calculateTotalPrice(order.getOrderItems());
@@ -76,7 +81,22 @@ public class OrderServiceImpl implements OrderService {
                 .and(OrderSpecification.hasStatuses(orderStatuses));
         Page<Order> foundOrders = orderRepository.findAll(spec, pageable);
 
-        return foundOrders.map(orderMapper::toResponse);
+        if (foundOrders.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<Long> userIds = foundOrders.getContent().stream()
+                .map(Order::getUserId)
+                .distinct()
+                .toList();
+
+        List<UserResponse> userResponses = userServiceClient.getUsersByIds(userIds);
+        Map<Long, UserResponse> userMap = userResponses.stream()
+                .collect(toMap(UserResponse::id, user -> user));
+
+        return foundOrders.map(order -> {
+            UserResponse user = userMap.get(order.getUserId());
+            return orderMapper.toResponse(order, user);
+        });
     }
 
     @CachePut(value = "orders", key = "#id")
@@ -100,6 +120,12 @@ public class OrderServiceImpl implements OrderService {
         log.debug("Deleting order with id: {}", id);
         Order foundOrder = getOrderEntityById(id);
         orderRepository.delete(foundOrder);
+    }
+
+    @Override
+    public Long getUserIdByOrderId(Long orderId) {
+        return orderRepository.findUserIdByOrderId(orderId)
+                .orElseThrow(()->new UserNotFoundException(orderId));
     }
 
     private Order getOrderEntityById(Long id) {

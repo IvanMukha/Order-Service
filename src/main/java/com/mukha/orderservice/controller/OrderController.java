@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,33 +35,40 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<OrderResponse> createOrder(@RequestParam String userEmail, @Valid @RequestBody CreateOrderRequest createOrderRequest){
-        OrderResponse savedOrder=orderService.createOrder(createOrderRequest,userEmail);
+    @PreAuthorize("hasAuthority('admin') or hasAuthority('user')")
+    public ResponseEntity<OrderResponse> createOrder(@RequestParam String userEmail, @Valid @RequestBody CreateOrderRequest createOrderRequest) {
+        OrderResponse savedOrder = orderService.createOrder(createOrderRequest, userEmail);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedOrder);
     }
+
     @GetMapping("/{id}")
-    public ResponseEntity<OrderResponse> getById(@PathVariable Long id){
+    @PreAuthorize("hasAuthority('admin') or @orderSecurity.isOwner(#id)")
+    public ResponseEntity<OrderResponse> getById(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.getById(id));
     }
 
     @GetMapping
-    public ResponseEntity<Page<OrderResponse>> getAll(@RequestParam(required = false)Long userId,
+    @PreAuthorize("hasAuthority('admin')")
+    public ResponseEntity<Page<OrderResponse>> getAll(@RequestParam(required = false) Long userId,
                                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
                                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
                                                       @RequestParam(required = false) List<OrderStatus> statuses,
-                                                      Pageable pageable){
+                                                      Pageable pageable) {
         Page<OrderResponse> orders = orderService.getAll(userId, startDate, endDate, statuses, pageable);
         return ResponseEntity.status(HttpStatus.OK).body(orders);
 
     }
+
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAuthority('admin') or @orderSecurity.isOwner(#id)")
     public ResponseEntity<OrderResponse> updateById(@PathVariable Long id,
-                                                    @Valid @RequestBody UpdateOrderRequest updateOrderRequest){
-        return ResponseEntity.status(HttpStatus.OK).body(orderService.updateById(id,updateOrderRequest));
+                                                    @Valid @RequestBody UpdateOrderRequest updateOrderRequest) {
+        return ResponseEntity.status(HttpStatus.OK).body(orderService.updateById(id, updateOrderRequest));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteOrderById(@PathVariable Long id){
+    @PreAuthorize("hasAuthority('admin') or @orderSecurity.isOwner(#id)")
+    public ResponseEntity<Void> deleteOrderById(@PathVariable Long id) {
         orderService.deleteOrderById(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }

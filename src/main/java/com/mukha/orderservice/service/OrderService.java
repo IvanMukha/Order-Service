@@ -15,10 +15,12 @@ public interface OrderService {
 
     OrderResponse getById(Long id);
 
-    Page<OrderResponse> getAll(Long userId,LocalDateTime startDate, LocalDateTime endDate, List<OrderStatus> orderStatuses, Pageable pageable);
+    Page<OrderResponse> getAll(Long userId, LocalDateTime startDate, LocalDateTime endDate, List<OrderStatus> orderStatuses, Pageable pageable);
 
     OrderResponse updateById(Long id, UpdateOrderRequest updateOrderRequest);
 
     void deleteOrderById(Long id);
+
+    Long getUserIdByOrderId(Long orderId);
 
 }

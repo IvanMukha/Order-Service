@@ -16,7 +16,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
         uses = OrderItemMapper.class
 )
 public interface OrderMapper {
-
+    @Mapping(target = "id", source = "order.id")
     OrderResponse toResponse(Order order, UserResponse user);
 
     @Mapping(target = "orderItems", ignore = true)

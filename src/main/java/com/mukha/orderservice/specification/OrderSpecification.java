@@ -28,6 +28,7 @@ public class OrderSpecification {
             return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
         };
     }
+
     public static Specification<Order> hasStatuses(List<OrderStatus> statuses) {
         return (root, query, cb) -> {
             if (statuses == null || statuses.isEmpty()) {
@@ -36,6 +37,7 @@ public class OrderSpecification {
             return root.get(Order.Fields.status).in(statuses);
         };
     }
+
     public static Specification<Order> hasUserId(Long userId) {
         return (root, query, criteriaBuilder) -> {
             if (userId == null) {

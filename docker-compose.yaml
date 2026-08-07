@@ -27,7 +27,7 @@ services:
     image: redis:7-alpine
     container_name: orderservice-redis
     ports:
-      - "${REDIS_PORT}:6380"
+      - "${REDIS_PORT}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -54,6 +54,11 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      USER_SERVICE_NAME: ${USER_SERVICE_NAME}
+      USER_SERVICE_URL: ${USER_SERVICE_URL}
     ports:
       - "8083:8083"
     depends_on:
@@ -69,7 +74,7 @@ services:
           memory: ${APP_MEM_LIMIT}
 
 networks:
-  userservice-network:
+  innowise-network:
     driver: bridge
 
 volumes:
