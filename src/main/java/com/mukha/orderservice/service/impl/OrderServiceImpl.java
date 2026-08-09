@@ -8,7 +8,6 @@ import com.mukha.orderservice.dto.response.OrderResponse;
 import com.mukha.orderservice.dto.response.UserResponse;
 import com.mukha.orderservice.exception.ItemNotFoundException;
 import com.mukha.orderservice.exception.OrderNotFoundException;
-import com.mukha.orderservice.exception.UserNotFoundException;
 import com.mukha.orderservice.mapper.OrderMapper;
 import com.mukha.orderservice.model.Item;
 import com.mukha.orderservice.model.Order;
@@ -125,7 +124,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Long getUserIdByOrderId(Long orderId) {
         return orderRepository.findUserIdByOrderId(orderId)
-                .orElseThrow(()->new UserNotFoundException(orderId));
+                .orElseThrow(()->new OrderNotFoundException(orderId));
     }
 
     private Order getOrderEntityById(Long id) {
