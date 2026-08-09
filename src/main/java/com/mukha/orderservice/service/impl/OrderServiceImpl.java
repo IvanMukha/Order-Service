@@ -6,15 +6,15 @@ import com.mukha.orderservice.dto.request.OrderItemRequest;
 import com.mukha.orderservice.dto.request.UpdateOrderRequest;
 import com.mukha.orderservice.dto.response.OrderResponse;
 import com.mukha.orderservice.dto.response.UserResponse;
-import com.mukha.orderservice.exception.ItemNotFoundException;
 import com.mukha.orderservice.exception.OrderNotFoundException;
+import com.mukha.orderservice.mapper.ItemMapper;
 import com.mukha.orderservice.mapper.OrderMapper;
 import com.mukha.orderservice.model.Item;
 import com.mukha.orderservice.model.Order;
 import com.mukha.orderservice.model.OrderItem;
 import com.mukha.orderservice.model.status.OrderStatus;
-import com.mukha.orderservice.repository.ItemRepository;
 import com.mukha.orderservice.repository.OrderRepository;
+import com.mukha.orderservice.service.ItemService;
 import com.mukha.orderservice.service.OrderService;
 import com.mukha.orderservice.specification.OrderSpecification;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +45,8 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
     private final UserServiceClient userServiceClient;
-    private final ItemRepository itemRepository;
+    private final ItemService itemService;
+    private final ItemMapper itemMapper;
 
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest createOrderRequest, String userEmail) {
@@ -139,8 +140,7 @@ public class OrderServiceImpl implements OrderService {
         List<OrderItem> newItems = new ArrayList<>();
 
         for (OrderItemRequest request : requests) {
-            Item realItem = itemRepository.findById(request.itemId())
-                    .orElseThrow(() -> new ItemNotFoundException(request.itemId()));
+            Item realItem = itemMapper.toEntity(itemService.getById(request.itemId()));
 
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);

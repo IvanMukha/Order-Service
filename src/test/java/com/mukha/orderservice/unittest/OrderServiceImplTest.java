@@ -4,16 +4,18 @@ import com.mukha.orderservice.client.UserServiceClient;
 import com.mukha.orderservice.dto.request.CreateOrderRequest;
 import com.mukha.orderservice.dto.request.OrderItemRequest;
 import com.mukha.orderservice.dto.request.UpdateOrderRequest;
+import com.mukha.orderservice.dto.response.ItemResponse;
 import com.mukha.orderservice.dto.response.OrderResponse;
 import com.mukha.orderservice.dto.response.UserResponse;
 import com.mukha.orderservice.exception.ItemNotFoundException;
 import com.mukha.orderservice.exception.OrderNotFoundException;
+import com.mukha.orderservice.mapper.ItemMapper;
 import com.mukha.orderservice.mapper.OrderMapper;
 import com.mukha.orderservice.model.Item;
 import com.mukha.orderservice.model.Order;
 import com.mukha.orderservice.model.status.OrderStatus;
-import com.mukha.orderservice.repository.ItemRepository;
 import com.mukha.orderservice.repository.OrderRepository;
+import com.mukha.orderservice.service.ItemService;
 import com.mukha.orderservice.service.impl.OrderServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,7 +58,10 @@ class OrderServiceImplTest {
     private UserServiceClient userServiceClient;
 
     @Mock
-    private ItemRepository itemRepository;
+    private ItemService itemService;
+
+    @Mock
+    private ItemMapper itemMapper;
 
     @InjectMocks
     private OrderServiceImpl orderService;
@@ -68,6 +73,7 @@ class OrderServiceImplTest {
 
     private UserResponse userResponse;
     private Item item;
+    private ItemResponse itemResponse;
 
     @BeforeEach
     void setUp() {
@@ -77,6 +83,7 @@ class OrderServiceImplTest {
         item.setId(ITEM_ID);
         item.setName("Test item");
         item.setPrice(BigDecimal.valueOf(50));
+        itemResponse= new ItemResponse(ITEM_ID,"Test item",BigDecimal.valueOf(50));
     }
 
     @Test
@@ -97,7 +104,8 @@ class OrderServiceImplTest {
 
         when(userServiceClient.getUserByEmail(USER_EMAIL)).thenReturn(userResponse);
         when(orderMapper.toEntity(request)).thenReturn(mappedOrder);
-        when(itemRepository.findById(ITEM_ID)).thenReturn(Optional.of(item));
+        when(itemService.getById(ITEM_ID)).thenReturn(itemResponse);
+        when(itemMapper.toEntity(itemResponse)).thenReturn(item);
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
         when(orderMapper.toResponse(savedOrder, userResponse)).thenReturn(expectedResponse);
 
@@ -126,7 +134,7 @@ class OrderServiceImplTest {
 
         when(userServiceClient.getUserByEmail(USER_EMAIL)).thenReturn(userResponse);
         when(orderMapper.toEntity(request)).thenReturn(mappedOrder);
-        when(itemRepository.findById(ITEM_ID)).thenReturn(Optional.empty());
+        when(itemService.getById(ITEM_ID)).thenThrow(new ItemNotFoundException(ITEM_ID));
 
         assertThatThrownBy(() -> orderService.createOrder(request, USER_EMAIL))
                 .isInstanceOf(ItemNotFoundException.class);
@@ -199,7 +207,7 @@ class OrderServiceImplTest {
     }
 
     @Test
-    void updateByIdshouldUpdateOrderSuccessfully() {
+    void updateById_shouldUpdateOrderSuccessfully() {
         OrderItemRequest itemRequest = new OrderItemRequest(ITEM_ID, 2);
         UpdateOrderRequest request = new UpdateOrderRequest(OrderStatus.CONFIRMED, List.of(itemRequest));
 
@@ -212,10 +220,11 @@ class OrderServiceImplTest {
                 ORDER_ID, USER_ID, OrderStatus.CONFIRMED, BigDecimal.valueOf(100), List.of(), userResponse);
 
         when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.of(existingOrder));
-        when(itemRepository.findById(ITEM_ID)).thenReturn(Optional.of(item));
+        when(itemService.getById(ITEM_ID)).thenReturn(itemResponse);
         when(userServiceClient.getUserById(USER_ID)).thenReturn(userResponse);
         when(orderRepository.save(existingOrder)).thenReturn(existingOrder);
         when(orderMapper.toResponse(existingOrder, userResponse)).thenReturn(expectedResponse);
+        when(itemMapper.toEntity(itemResponse)).thenReturn(item);
 
         OrderResponse result = orderService.updateById(ORDER_ID, request);
 
@@ -247,7 +256,7 @@ class OrderServiceImplTest {
         existingOrder.setOrderItems(new java.util.ArrayList<>());
 
         when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.of(existingOrder));
-        when(itemRepository.findById(ITEM_ID)).thenReturn(Optional.empty());
+        when(itemService.getById(ITEM_ID)).thenThrow(new ItemNotFoundException(ITEM_ID));
 
         assertThatThrownBy(() -> orderService.updateById(ORDER_ID, request))
                 .isInstanceOf(ItemNotFoundException.class);
