@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class ItemControllerTest extends AbstractIntegrationTest {
-    private final static String BASE_URL = "/v1/api/items";
+    private static final String BASE_URL = "/v1/api/items";
     @Autowired
     private MockMvc mockMvc;
 
