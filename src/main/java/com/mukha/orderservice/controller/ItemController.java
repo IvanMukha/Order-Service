@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Validated
 @RequiredArgsConstructor
-@RequestMapping("/api/items")
+@RequestMapping("/v1/api/items")
 public class ItemController {
 
     private final ItemService itemService;

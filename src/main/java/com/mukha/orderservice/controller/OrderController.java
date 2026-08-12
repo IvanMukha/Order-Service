@@ -30,7 +30,7 @@ import java.util.List;
 @RestController
 @Validated
 @RequiredArgsConstructor
-@RequestMapping("/api/orders")
+@RequestMapping("v1/api/orders")
 public class OrderController {
     private final OrderService orderService;
 

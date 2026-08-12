@@ -14,12 +14,12 @@ import java.util.List;
         fallback = UserServiceClientFallback.class)
 public interface UserServiceClient {
 
-    @GetMapping("/api/users/by-email")
+    @GetMapping("/v1/api/users/email")
     UserResponse getUserByEmail(@RequestParam String email);
 
-    @GetMapping("/api/users/{id}")
+    @GetMapping("/v1/api/users/{id}")
     UserResponse getUserById(@PathVariable Long id);
 
-    @GetMapping("/api/users/batch")
+    @GetMapping("/v1/api/users/batch")
     List<UserResponse> getUsersByIds(@RequestParam("ids") List<Long> userIds);
 }
