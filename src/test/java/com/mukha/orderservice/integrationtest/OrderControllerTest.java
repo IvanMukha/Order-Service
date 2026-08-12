@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class OrderControllerTest extends AbstractIntegrationTest {
-
+    private static final String BASE_URL = "/v1/api/orders";
     private static final String USER_EMAIL = "ivan@gmail.com";
     private static final Long USER_ID = 1L;
 
@@ -87,7 +87,7 @@ class OrderControllerTest extends AbstractIntegrationTest {
     }
 
     private UserResponse defaultUserResponse() {
-        return new UserResponse(USER_ID, UUID.randomUUID(),"Ivan", "Mukha", USER_EMAIL);
+        return new UserResponse(USER_ID, UUID.randomUUID(), "Ivan", "Mukha", USER_EMAIL);
     }
 
     @Test
@@ -99,7 +99,7 @@ class OrderControllerTest extends AbstractIntegrationTest {
         CreateOrderRequest request = new CreateOrderRequest(
                 List.of(new OrderItemRequest(item.getId(), 2)));
 
-        mockMvc.perform(post("/api/orders")
+        mockMvc.perform(post(BASE_URL)
                         .param("userEmail", USER_EMAIL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -115,7 +115,7 @@ class OrderControllerTest extends AbstractIntegrationTest {
     void createOrder_shouldReturnBadRequest_whenOrderItemsIsEmpty() throws Exception {
         CreateOrderRequest request = new CreateOrderRequest(List.of());
 
-        mockMvc.perform(post("/api/orders")
+        mockMvc.perform(post(BASE_URL)
                         .param("userEmail", USER_EMAIL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -130,7 +130,7 @@ class OrderControllerTest extends AbstractIntegrationTest {
         CreateOrderRequest request = new CreateOrderRequest(
                 List.of(new OrderItemRequest(999L, 1)));
 
-        mockMvc.perform(post("/api/orders")
+        mockMvc.perform(post(BASE_URL)
                         .param("userEmail", USER_EMAIL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -145,7 +145,7 @@ class OrderControllerTest extends AbstractIntegrationTest {
         CreateOrderRequest request = new CreateOrderRequest(
                 List.of(new OrderItemRequest(item.getId(), 0)));
 
-        mockMvc.perform(post("/api/orders")
+        mockMvc.perform(post(BASE_URL)
                         .param("userEmail", USER_EMAIL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -159,7 +159,7 @@ class OrderControllerTest extends AbstractIntegrationTest {
         Order order = createOrder(USER_ID, OrderStatus.CREATED, item, 1);
         when(userServiceClient.getUserById(USER_ID)).thenReturn(defaultUserResponse());
 
-        mockMvc.perform(get("/api/orders/{id}", order.getId()))
+        mockMvc.perform(get(BASE_URL + "/{id}", order.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(order.getId()))
                 .andExpect(jsonPath("$.status").value(OrderStatus.CREATED.name()))
@@ -169,7 +169,7 @@ class OrderControllerTest extends AbstractIntegrationTest {
     @Test
     @WithMockUser(authorities = "admin")
     void getById_shouldReturnNotFound_whenOrderDoesNotExist() throws Exception {
-        mockMvc.perform(get("/api/orders/{id}", 999L))
+        mockMvc.perform(get(BASE_URL + "/{id}", 999L))
                 .andExpect(status().isNotFound());
     }
 
@@ -181,7 +181,7 @@ class OrderControllerTest extends AbstractIntegrationTest {
         createOrder(USER_ID, OrderStatus.CONFIRMED, item, 2);
         when(userServiceClient.getUsersByIds(anyList())).thenReturn(List.of(defaultUserResponse()));
 
-        mockMvc.perform(get("/api/orders"))
+        mockMvc.perform(get(BASE_URL))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2));
     }
@@ -194,7 +194,7 @@ class OrderControllerTest extends AbstractIntegrationTest {
         createOrder(USER_ID, OrderStatus.CANCELLED, item, 1);
         when(userServiceClient.getUsersByIds(anyList())).thenReturn(List.of(defaultUserResponse()));
 
-        mockMvc.perform(get("/api/orders").param("statuses", OrderStatus.CANCELLED.name()))
+        mockMvc.perform(get(BASE_URL).param("statuses", OrderStatus.CANCELLED.name()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.content[0].status").value(OrderStatus.CANCELLED.name()));
@@ -206,7 +206,7 @@ class OrderControllerTest extends AbstractIntegrationTest {
         Item item = createItem("Lamp", BigDecimal.valueOf(30));
         createOrder(USER_ID, OrderStatus.CREATED, item, 1);
 
-        mockMvc.perform(get("/api/orders").param("userId", "999"))
+        mockMvc.perform(get(BASE_URL).param("userId", "999"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(0));
     }
@@ -221,7 +221,7 @@ class OrderControllerTest extends AbstractIntegrationTest {
         UpdateOrderRequest request = new UpdateOrderRequest(
                 OrderStatus.CONFIRMED, List.of(new OrderItemRequest(item.getId(), 3)));
 
-        mockMvc.perform(patch("/api/orders/{id}", order.getId())
+        mockMvc.perform(patch(BASE_URL + "/{id}", order.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -236,7 +236,7 @@ class OrderControllerTest extends AbstractIntegrationTest {
         UpdateOrderRequest request = new UpdateOrderRequest(
                 OrderStatus.CONFIRMED, List.of(new OrderItemRequest(1L, 1)));
 
-        mockMvc.perform(patch("/api/orders/{id}", 999L)
+        mockMvc.perform(patch(BASE_URL + "/{id}", 999L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound());
@@ -251,7 +251,7 @@ class OrderControllerTest extends AbstractIntegrationTest {
         UpdateOrderRequest request = new UpdateOrderRequest(
                 null, List.of(new OrderItemRequest(item.getId(), 1)));
 
-        mockMvc.perform(patch("/api/orders/{id}", order.getId())
+        mockMvc.perform(patch(BASE_URL + "/{id}", order.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -265,7 +265,7 @@ class OrderControllerTest extends AbstractIntegrationTest {
 
         UpdateOrderRequest request = new UpdateOrderRequest(OrderStatus.CONFIRMED, List.of());
 
-        mockMvc.perform(patch("/api/orders/{id}", order.getId())
+        mockMvc.perform(patch(BASE_URL + "/{id}", order.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -277,17 +277,17 @@ class OrderControllerTest extends AbstractIntegrationTest {
         Item item = createItem("Speaker", BigDecimal.valueOf(70));
         Order order = createOrder(USER_ID, OrderStatus.CREATED, item, 1);
 
-        mockMvc.perform(delete("/api/orders/{id}", order.getId()))
+        mockMvc.perform(delete(BASE_URL + "/{id}", order.getId()))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/orders/{id}", order.getId()))
+        mockMvc.perform(get(BASE_URL + "/{id}", order.getId()))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     @WithMockUser(authorities = "admin")
     void deleteOrderById_shouldReturnNotFound_whenOrderDoesNotExist() throws Exception {
-        mockMvc.perform(delete("/api/orders/{id}", 999L))
+        mockMvc.perform(delete(BASE_URL + "/{id}", 999L))
                 .andExpect(status().isNotFound());
     }
 }

@@ -20,7 +20,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class ItemControllerTest  extends AbstractIntegrationTest{
+class ItemControllerTest extends AbstractIntegrationTest {
+    private final static String BASE_URL = "/v1/api/items";
     @Autowired
     private MockMvc mockMvc;
 
@@ -47,7 +48,7 @@ class ItemControllerTest  extends AbstractIntegrationTest{
     void createItem_shouldReturnCreatedItem_whenRequestIsValid() throws Exception {
         ItemRequest request = new ItemRequest("Keyboard", BigDecimal.valueOf(49.99));
 
-        mockMvc.perform(post("/api/items")
+        mockMvc.perform(post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -61,7 +62,7 @@ class ItemControllerTest  extends AbstractIntegrationTest{
     void createItem_shouldReturnBadRequest_whenNameIsInvalid() throws Exception {
         ItemRequest request = new ItemRequest("", BigDecimal.valueOf(49.99));
 
-        mockMvc.perform(post("/api/items")
+        mockMvc.perform(post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -72,7 +73,7 @@ class ItemControllerTest  extends AbstractIntegrationTest{
     void createItem_shouldReturnBadRequest_whenPriceIsNegative() throws Exception {
         ItemRequest request = new ItemRequest("KeyBoard", BigDecimal.valueOf(-10.00));
 
-        mockMvc.perform(post("/api/items")
+        mockMvc.perform(post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -83,7 +84,7 @@ class ItemControllerTest  extends AbstractIntegrationTest{
     void createItem_shouldReturnForbidden_whenUserIsNotAdmin() throws Exception {
         ItemRequest request = new ItemRequest("Keyboard", BigDecimal.valueOf(49.99));
 
-        mockMvc.perform(post("/api/items")
+        mockMvc.perform(post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
@@ -94,7 +95,7 @@ class ItemControllerTest  extends AbstractIntegrationTest{
     void getById_shouldReturnItem_whenItemExists() throws Exception {
         Item item = createItem("Keyboard", BigDecimal.valueOf(89.99));
 
-        mockMvc.perform(get("/api/items/{id}", item.getId()))
+        mockMvc.perform(get(BASE_URL + "/{id}", item.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(item.getId()))
                 .andExpect(jsonPath("$.name").value("Keyboard"))
@@ -104,7 +105,7 @@ class ItemControllerTest  extends AbstractIntegrationTest{
     @Test
     @WithMockUser(authorities = "admin")
     void getById_shouldReturnNotFound_whenItemDoesNotExist() throws Exception {
-        mockMvc.perform(get("/api/items/{id}", 999L))
+        mockMvc.perform(get(BASE_URL + "/{id}", 999L))
                 .andExpect(status().isNotFound());
     }
 
@@ -114,7 +115,7 @@ class ItemControllerTest  extends AbstractIntegrationTest{
         createItem("Item 1", BigDecimal.valueOf(10));
         createItem("Item 2", BigDecimal.valueOf(20));
 
-        mockMvc.perform(get("/api/items")
+        mockMvc.perform(get(BASE_URL)
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -129,7 +130,7 @@ class ItemControllerTest  extends AbstractIntegrationTest{
         Item item = createItem("Keyboard", BigDecimal.valueOf(50.00));
         ItemRequest request = new ItemRequest("Updated", BigDecimal.valueOf(60.00));
 
-        mockMvc.perform(patch("/api/items/{id}", item.getId())
+        mockMvc.perform(patch(BASE_URL + "/{id}", item.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -143,7 +144,7 @@ class ItemControllerTest  extends AbstractIntegrationTest{
     void updateById_shouldReturnNotFound_whenItemDoesNotExist() throws Exception {
         ItemRequest request = new ItemRequest("Updated", BigDecimal.valueOf(60.00));
 
-        mockMvc.perform(patch("/api/items/{id}", 999L)
+        mockMvc.perform(patch(BASE_URL + "/{id}", 999L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound());
@@ -154,17 +155,17 @@ class ItemControllerTest  extends AbstractIntegrationTest{
     void deleteById_shouldReturnNoContent_whenItemExists() throws Exception {
         Item item = createItem("Keyboard", BigDecimal.valueOf(15.00));
 
-        mockMvc.perform(delete("/api/items/{id}", item.getId()))
+        mockMvc.perform(delete(BASE_URL + "/{id}", item.getId()))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/items/{id}", item.getId()))
+        mockMvc.perform(get(BASE_URL + "/{id}", item.getId()))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     @WithMockUser(authorities = "admin")
     void deleteById_shouldReturnNotFound_whenItemDoesNotExist() throws Exception {
-        mockMvc.perform(delete("/api/items/{id}", 999L))
+        mockMvc.perform(delete(BASE_URL + "/{id}", 999L))
                 .andExpect(status().isNotFound());
     }
 }
