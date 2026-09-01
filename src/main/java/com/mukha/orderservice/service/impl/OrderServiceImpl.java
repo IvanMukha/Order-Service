@@ -128,6 +128,15 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(()->new OrderNotFoundException(orderId));
     }
 
+    @Transactional
+    @CacheEvict(value = "orders", key = "#orderId")
+    public void updateStatusByOrderId(Long orderId, OrderStatus status) {
+        log.debug("Updating order status from payment event. orderId: {}, newStatus: {}", orderId, status);
+        Order order = getOrderEntityById(orderId);
+        order.setStatus(status);
+        orderRepository.save(order);
+    }
+
     private Order getOrderEntityById(Long id) {
         return orderRepository.findById(id)
                 .orElseThrow(() -> {

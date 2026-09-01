@@ -83,7 +83,7 @@ class OrderServiceImplTest {
         item.setId(ITEM_ID);
         item.setName("Test item");
         item.setPrice(BigDecimal.valueOf(50));
-        itemResponse= new ItemResponse(ITEM_ID,"Test item",BigDecimal.valueOf(50));
+        itemResponse = new ItemResponse(ITEM_ID, "Test item", BigDecimal.valueOf(50));
     }
 
     @Test
@@ -285,6 +285,7 @@ class OrderServiceImplTest {
 
         verify(orderRepository, never()).delete(any(Order.class));
     }
+
     @Test
     void getUserIdByOrderId_shouldReturnUserId_whenOrderExists() {
         when(orderRepository.findUserIdByOrderId(ORDER_ID)).thenReturn(Optional.of(USER_ID));
@@ -294,6 +295,7 @@ class OrderServiceImplTest {
         assertThat(result).isEqualTo(USER_ID);
         verify(orderRepository).findUserIdByOrderId(ORDER_ID);
     }
+
     @Test
     void getUserIdByOrderId_shouldThrowUserNotFoundException_whenOrderDoesNotExist() {
         when(orderRepository.findUserIdByOrderId(ORDER_ID)).thenReturn(Optional.empty());
