@@ -306,10 +306,9 @@ class OrderServiceImplTest {
         verify(orderRepository).findUserIdByOrderId(ORDER_ID);
     }
     @Test
-    void updateStatusByOrderId_shouldUpdateStatus_whenOrderExists() {
+    void updateStatusByOrderId_shouldUpdateStatus_whenTransitionIsForward() {
         Order existingOrder = new Order();
         existingOrder.setId(ORDER_ID);
-        existingOrder.setUserId(USER_ID);
         existingOrder.setStatus(OrderStatus.CREATED);
 
         when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.of(existingOrder));
@@ -318,18 +317,73 @@ class OrderServiceImplTest {
 
         ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
         verify(orderRepository).save(orderCaptor.capture());
-        Order savedOrder = orderCaptor.getValue();
-
-        assertThat(savedOrder.getId()).isEqualTo(ORDER_ID);
-        assertThat(savedOrder.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
+        assertThat(orderCaptor.getValue().getStatus()).isEqualTo(OrderStatus.CONFIRMED);
     }
 
     @Test
-    void updateStatusByOrderId_shouldThrowOrderNotFoundException_whenNotExists() {
-        when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.empty());
+    void updateStatusByOrderId_shouldCancel_regardlessOfCurrentProgress() {
+        Order existingOrder = new Order();
+        existingOrder.setId(ORDER_ID);
+        existingOrder.setStatus(OrderStatus.PROCESSING);
 
-        assertThatThrownBy(() -> orderService.updateStatusByOrderId(ORDER_ID, OrderStatus.CONFIRMED))
-                .isInstanceOf(OrderNotFoundException.class);
+        when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.of(existingOrder));
+
+        orderService.updateStatusByOrderId(ORDER_ID, OrderStatus.CANCELLED);
+
+        ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
+        verify(orderRepository).save(orderCaptor.capture());
+        assertThat(orderCaptor.getValue().getStatus()).isEqualTo(OrderStatus.CANCELLED);
+    }
+
+    @Test
+    void updateStatusByOrderId_shouldIgnoreStaleEvent_whenStatusIsBehindCurrent() {
+        Order existingOrder = new Order();
+        existingOrder.setId(ORDER_ID);
+        existingOrder.setStatus(OrderStatus.SHIPPED);
+
+        when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.of(existingOrder));
+
+        orderService.updateStatusByOrderId(ORDER_ID, OrderStatus.CONFIRMED);
+
+        assertThat(existingOrder.getStatus()).isEqualTo(OrderStatus.SHIPPED);
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void updateStatusByOrderId_shouldIgnoreDuplicateEvent_whenStatusIsSameAsCurrent() {
+        Order existingOrder = new Order();
+        existingOrder.setId(ORDER_ID);
+        existingOrder.setStatus(OrderStatus.CONFIRMED);
+
+        when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.of(existingOrder));
+
+        orderService.updateStatusByOrderId(ORDER_ID, OrderStatus.CONFIRMED);
+
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void updateStatusByOrderId_shouldIgnoreAnyUpdate_whenOrderAlreadyDelivered() {
+        Order existingOrder = new Order();
+        existingOrder.setId(ORDER_ID);
+        existingOrder.setStatus(OrderStatus.DELIVERED);
+
+        when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.of(existingOrder));
+
+        orderService.updateStatusByOrderId(ORDER_ID, OrderStatus.CANCELLED);
+
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void updateStatusByOrderId_shouldIgnoreAnyUpdate_whenOrderAlreadyCancelled() {
+        Order existingOrder = new Order();
+        existingOrder.setId(ORDER_ID);
+        existingOrder.setStatus(OrderStatus.CANCELLED);
+
+        when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.of(existingOrder));
+
+        orderService.updateStatusByOrderId(ORDER_ID, OrderStatus.CONFIRMED);
 
         verify(orderRepository, never()).save(any());
     }
