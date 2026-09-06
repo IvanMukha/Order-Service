@@ -128,6 +128,37 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(()->new OrderNotFoundException(orderId));
     }
 
+    @Transactional
+    @CacheEvict(value = "orders", key = "#orderId")
+    public void updateStatusByOrderId(Long orderId, OrderStatus status) {
+        Order order = getOrderEntityById(orderId);
+        OrderStatus currentStatus = order.getStatus();
+
+        if (!isTransitionAllowed(currentStatus, status)) {
+            log.warn("Ignoring order status update for orderId: {}: {} -> {} is not a valid forward transition",
+                    orderId, currentStatus, status);
+            return;
+        }
+
+        log.debug("Updating order status from payment event. orderId: {}, newStatus: {}", orderId, status);
+        order.setStatus(status);
+        orderRepository.save(order);
+    }
+
+    private boolean isTransitionAllowed(OrderStatus current, OrderStatus next) {
+        if (isTerminal(current)) {
+            return false;
+        }
+        if (next == OrderStatus.CANCELLED) {
+            return true;
+        }
+        return next.ordinal() > current.ordinal();
+    }
+
+    private boolean isTerminal(OrderStatus status) {
+        return status == OrderStatus.DELIVERED || status == OrderStatus.CANCELLED;
+    }
+
     private Order getOrderEntityById(Long id) {
         return orderRepository.findById(id)
                 .orElseThrow(() -> {
